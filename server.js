@@ -9,7 +9,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ ROOT CHECK ROUTE
 app.get("/", (req, res) => {
   res.json({ status: "API is running 🚀" });
 });
@@ -18,17 +17,15 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// ✅ MAIN AI ROUTE
 app.post("/generate", async (req, res) => {
-
-  const { topic, type, tone } = req.body;
-
   try {
+    const { topic, type, tone } = req.body;
+
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{
         role: "user",
-        content: `Write a ${type} about "${topic}" in ${tone} tone. SEO friendly and human style.`
+        content: `Write a ${type} about ${topic} in ${tone} tone.`
       }]
     });
 
@@ -37,11 +34,9 @@ app.post("/generate", async (req, res) => {
     });
 
   } catch (err) {
-    res.json({
-      result: "Error: " + err.message
-    });
+    res.json({ result: "ERROR: " + err.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on " + PORT));
+app.listen(PORT, () => console.log("Server running"));
