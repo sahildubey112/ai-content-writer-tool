@@ -1,5 +1,5 @@
 {
-  "name": "ai-tool",
+  "name": "ai-content-writer",
   "version": "1.0.0",
   "type": "module",
   "main": "server.js",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "node-fetch": "^3.3.2"
   }
 }
