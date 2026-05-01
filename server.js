@@ -7,14 +7,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ROOT
+// ✅ ROOT (for testing)
 app.get("/", (req, res) => {
-  res.json({ status: "AI Tool Running 🚀" });
+  res.send("🔥 NEW AI VERSION RUNNING 🔥");
 });
 
-// GENERATE
+// ✅ GENERATE API
 app.post("/generate", async (req, res) => {
-
   try {
     const { topic, type, tone } = req.body;
 
@@ -24,16 +23,20 @@ app.post("/generate", async (req, res) => {
 
     const prompt = `Write a ${type} about "${topic}" in ${tone} tone. Make it detailed and human-like.`;
 
+    // ✅ IMPORTANT: FULL URL (NOT /models/...)
     const response = await fetch(
       "https://api-inference.huggingface.co/models/gpt2",
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.HF_API_KEY}`,
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          inputs: prompt
+          inputs: prompt,
+          options: {
+            wait_for_model: true
+          }
         })
       }
     );
@@ -60,9 +63,11 @@ app.post("/generate", async (req, res) => {
   } catch (err) {
     res.json({ result: "Fetch Error: " + err.message });
   }
-
 });
 
-// PORT FIX
+// ✅ PORT (Render fix)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running"));
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
