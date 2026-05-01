@@ -7,67 +7,48 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ ROOT CHECK
+// ROOT
 app.get("/", (req, res) => {
-  res.json({ status: "AI Tool Running 🚀" });
+  res.send("NEW VERSION LIVE 🔥");   // 👈 change for confirmation
 });
 
-// ✅ GENERATE API
+// GENERATE
 app.post("/generate", async (req, res) => {
   try {
     const { topic, type, tone } = req.body;
 
-    if (!topic) {
-      return res.json({ result: "Please enter a topic" });
-    }
+    const prompt = `Write a ${type} about "${topic}" in ${tone} tone.`;
 
-    const prompt = `Write a ${type} about "${topic}" in ${tone} tone. Make it detailed and human-like.`;
-
+    // ✅ ONLY THIS URL (no /models mistake)
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+      "https://api-inference.huggingface.co/models/gpt2",
       {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.HF_API_KEY}`,
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          inputs: prompt,
-          options: {
-            wait_for_model: true   // 🔥 important (model loading fix)
-          }
-        })
+        body: JSON.stringify({ inputs: prompt })
       }
     );
 
-    const text = await response.text();
+    const data = await response.json();
 
-    let result = "No response from AI";
+    let result = "No response";
 
-    try {
-      const data = JSON.parse(text);
-
-      if (Array.isArray(data) && data[0]?.generated_text) {
-        result = data[0].generated_text;
-      } 
-      else if (data.error) {
-        result = "API Error: " + data.error;
-      }
-
-    } catch (e) {
-      result = "Server Error: " + text.substring(0, 200);
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      result = data[0].generated_text;
+    } else if (data.error) {
+      result = "API Error: " + data.error;
     }
 
     res.json({ result });
 
   } catch (err) {
-    res.json({ result: "Fetch Error: " + err.message });
+    res.json({ result: "Error: " + err.message });
   }
 });
 
-// ✅ PORT FIX (VERY IMPORTANT FOR RENDER)
+// PORT FIX
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+app.listen(PORT, () => console.log("Server running"));
