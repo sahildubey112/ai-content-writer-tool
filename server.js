@@ -7,9 +7,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ ROOT (for testing)
 app.get("/", (req, res) => {
-  res.send("🔥 NEW AI VERSION RUNNING 🔥");
+  res.send("🔥 FINAL VERSION LIVE 🔥");
 });
 
 // ✅ GENERATE API
