@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import fetch from "node-fetch";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
@@ -9,12 +9,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ ROOT CHECK
+// INIT GEMINI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// TEST ROUTE
 app.get("/", (req, res) => {
-  res.json({ status: "API is running 🚀" });
+  res.json({ status: "Gemini API running 🚀" });
 });
 
-// ✅ MAIN API
+// MAIN API
 app.post("/generate", async (req, res) => {
 
   const { topic, type, tone } = req.body;
@@ -25,43 +28,22 @@ app.post("/generate", async (req, res) => {
 
   try {
 
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash"
+    });
+
     const prompt = `Write a ${type} about "${topic}" in ${tone} tone. SEO friendly and human style.`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-bison-001:generateText?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          prompt: {
-            text: prompt
-          }
-        })
-      }
-    );
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    const data = await response.json();
-
-    // ✅ SAFE PARSE
-    let result = "No response from AI";
-
-    if (data?.candidates?.length > 0) {
-      result = data.candidates[0].output;
-    }
-
-    // ❗ API ERROR HANDLE
-    if (data.error) {
-      result = "API Error: " + data.error.message;
-    }
-
-    res.json({ result });
+    res.json({ result: text });
 
   } catch (err) {
-    res.json({ result: "Server Error: " + err.message });
+    res.json({ result: "Error: " + err.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on " + PORT));
+app.listen(PORT, () => console.log("Server running"));
