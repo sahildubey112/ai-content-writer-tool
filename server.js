@@ -7,12 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ ROOT (CHECK)
+// ROOT
 app.get("/", (req, res) => {
   res.send("🔥 FINAL VERSION LIVE 🔥");
 });
 
-// ✅ GENERATE API
+// GENERATE (ONLY ONE ROUTE)
 app.post("/generate", async (req, res) => {
   try {
     const { topic, type, tone } = req.body;
@@ -21,36 +21,24 @@ app.post("/generate", async (req, res) => {
       return res.json({ result: "Please enter a topic" });
     }
 
-    const prompt = `Write a ${type} about "${topic}" in ${tone} tone. Make it simple and human-like.`;
+    const prompt = `Write a ${type} about "${topic}" in ${tone} tone.`;
 
+    // ✅ ONLY THIS URL (IMPORTANT)
     const response = await fetch(
       "https://api-inference.huggingface.co/models/gpt2",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.HF_API_KEY || ""}`,
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          inputs: prompt,
-          options: { wait_for_model: true }
-        })
+        body: JSON.stringify({ inputs: prompt })
       }
     );
 
-    const contentType = response.headers.get("content-type");
-
-    // ❌ If HTML error
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text();
-      return res.json({
-        result: "❌ API Error (Check API Key or Limit)\n\n" + text.substring(0, 200)
-      });
-    }
-
     const data = await response.json();
 
-    let result = "No response from AI";
+    let result = "No response";
 
     if (Array.isArray(data) && data[0]?.generated_text) {
       result = data[0].generated_text;
@@ -65,9 +53,6 @@ app.post("/generate", async (req, res) => {
   }
 });
 
-// ✅ PORT FIX
+// PORT
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+app.listen(PORT, () => console.log("Server running"));
