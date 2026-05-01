@@ -1,9 +1,28 @@
-app.post("/generate", async (req, res) => {
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import fetch from "node-fetch";
 
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// ✅ TEST ROUTE
+app.get("/", (req, res) => {
+  res.json({ status: "Gemini API running 🚀" });
+});
+
+// ✅ MAIN API
+app.post("/generate", async (req, res) => {
   const { topic, type, tone } = req.body;
 
-  try {
+  if (!topic) {
+    return res.json({ result: "Please enter a topic" });
+  }
 
+  try {
     const prompt = `Write a ${type} about "${topic}" in ${tone} tone. SEO friendly and human style.`;
 
     const response = await fetch(
@@ -26,20 +45,17 @@ app.post("/generate", async (req, res) => {
 
     const data = await response.json();
 
-    // 🔥 SAFE PARSING (IMPORTANT)
+    // 🔥 SAFE PARSE
     let result = "No response from AI";
 
-    if (data && data.candidates && data.candidates.length > 0) {
-      const candidate = data.candidates[0];
-
-      if (candidate.content && candidate.content.parts) {
-        result = candidate.content.parts
-          .map(part => part.text)
-          .join("\n");
+    if (data?.candidates?.length > 0) {
+      const parts = data.candidates[0].content.parts;
+      if (parts?.length > 0) {
+        result = parts.map(p => p.text).join("\n");
       }
     }
 
-    // ❗ ERROR DEBUG (VERY IMPORTANT)
+    // ❗ API error handling
     if (data.error) {
       result = "API Error: " + data.error.message;
     }
@@ -50,3 +66,6 @@ app.post("/generate", async (req, res) => {
     res.json({ result: "Server Error: " + err.message });
   }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server running on " + PORT));
