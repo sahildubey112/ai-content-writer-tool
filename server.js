@@ -9,13 +9,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ TEST ROUTE
+// ✅ ROOT CHECK
 app.get("/", (req, res) => {
-  res.json({ status: "Gemini API running 🚀" });
+  res.json({ status: "API is running 🚀" });
 });
 
 // ✅ MAIN API
 app.post("/generate", async (req, res) => {
+
   const { topic, type, tone } = req.body;
 
   if (!topic) {
@@ -23,39 +24,34 @@ app.post("/generate", async (req, res) => {
   }
 
   try {
+
     const prompt = `Write a ${type} about "${topic}" in ${tone} tone. SEO friendly and human style.`;
 
-const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/text-bison-001:generateText?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
-          ]
+          prompt: {
+            text: prompt
+          }
         })
       }
     );
 
     const data = await response.json();
 
-    // 🔥 SAFE PARSE
+    // ✅ SAFE PARSE
     let result = "No response from AI";
 
     if (data?.candidates?.length > 0) {
-      const parts = data.candidates[0].content.parts;
-      if (parts?.length > 0) {
-        result = parts.map(p => p.text).join("\n");
-      }
+      result = data.candidates[0].output;
     }
 
-    // ❗ API error handling
+    // ❗ API ERROR HANDLE
     if (data.error) {
       result = "API Error: " + data.error.message;
     }
