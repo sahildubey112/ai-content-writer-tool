@@ -37,11 +37,22 @@ app.post("/generate", async (req, res) => {
       }
     );
 
-    const data = await response.json();
+const data = await response.json();
 
-    const result =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response from AI";
+// DEBUG (optional)
+console.log(JSON.stringify(data, null, 2));
+
+let result = "No response from AI";
+
+if (data.candidates && data.candidates.length > 0) {
+  let parts = data.candidates[0].content.parts;
+
+  if (parts && parts.length > 0) {
+    result = parts.map(p => p.text).join("\n");
+  }
+}
+
+res.json({ result });
 
     res.json({ result });
 
