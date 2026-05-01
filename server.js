@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import fetch from "node-fetch";
 
 dotenv.config();
 
@@ -8,62 +9,47 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Test route
+// TEST
 app.get("/", (req, res) => {
-  res.json({ status: "Gemini API running 🚀" });
+  res.json({ status: "Free AI API running 🚀" });
 });
 
-// Main route
+// GENERATE
 app.post("/generate", async (req, res) => {
+
   const { topic, type, tone } = req.body;
 
-  if (!topic) {
-    return res.json({ result: "Please enter a topic" });
-  }
-
   try {
-    const prompt = `Write a ${type} about "${topic}" in ${tone} tone. SEO friendly and human style.`;
 
-    // ✅ NEW WORKING ENDPOINT + MODEL
+    const prompt = `Write a ${type} about "${topic}" in ${tone} tone.`;
+
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      "https://api-inference.huggingface.co/models/gpt2",
       {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${process.env.HF_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }]
-            }
-          ]
+          inputs: prompt
         })
       }
     );
 
     const data = await response.json();
 
-    // Safe parsing
-    let result = "No response from AI";
+    let result = "No response";
 
-    if (data?.candidates?.length > 0) {
-      const parts = data.candidates[0].content.parts;
-      if (parts?.length > 0) {
-        result = parts.map(p => p.text).join("\n");
-      }
-    }
-
-    if (data.error) {
-      result = "API Error: " + data.error.message;
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      result = data[0].generated_text;
     }
 
     res.json({ result });
 
   } catch (err) {
-    res.json({ result: "Server Error: " + err.message });
+    res.json({ result: "Error: " + err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on " + PORT));
+app.listen(3000, () => console.log("Server running"));
